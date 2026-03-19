@@ -14,7 +14,14 @@ async def delete_message(chat_id, message_id, context):
     except Exception as e:
         print(f"Error deleting message: {e}")
 
+# Yahan maine standard rarities aur teri DB wali rarities merge kar di hain
 RARITY_WEIGHTS = {
+    "⚪️ Common": (40, True),
+    "🟢 Uncommon": (30, True),
+    "🔵 Rare": (20, True),
+    "🟣 Epic": (10, True),
+    "🟡 Legendary": (5, True),
+    "👑 Mythical": (2, True),
     "⚪️ Low": (40, True),              
     "🟠 Medium": (20, True),           
     "🔴 High": (12, True),             
@@ -32,28 +39,33 @@ RARITY_WEIGHTS = {
 async def send_image(update: Update, context: CallbackContext) -> None:
     chat_id = update.effective_chat.id
 
-    # Fetch all characters from MongoDB
+    # Fetch characters from MongoDB based on allowed rarities
     allowed_rarities = [k for k, v in RARITY_WEIGHTS.items() if v[1]]
     all_characters = list(await collection.find({"rarity": {"$in": allowed_rarities}}).to_list(length=None))
 
+    # 🔥 THE MASTER FALLBACK: Agar allowed rarities na milein, toh poore database se utha lo!
     if not all_characters:
-        await context.bot.send_message(chat_id, "No characters found with allowed rarities in the database.")
+        all_characters = list(await collection.find({}).to_list(length=None))
+        
+    if not all_characters:
+        await context.bot.send_message(chat_id, "Bhai, database ekdum khaali hai! Ek bhi Waifu nahi mili.")
         return
 
-    # Filter characters with valid rarity
+    # Filter characters
     available_characters = [
         c for c in all_characters 
-        if 'id' in c and c.get('rarity') is not None and RARITY_WEIGHTS.get(c.get('rarity'), (0, False))[1]
+        if 'id' in c and c.get('rarity') is not None
     ]
 
+    # Agar ab bhi filter hone ke baad empty ho (jo ki nahi hoga), toh sabko allowed maan lo
     if not available_characters:
-        await context.bot.send_message(chat_id, "No available characters with the allowed rarities.")
-        return
+        available_characters = all_characters
 
     # Weighted random selection
     cumulative_weights = []
     cumulative_weight = 0
     for char in available_characters:
+        # Agar koi nayi rarity aati hai jo list mein nahi hai, toh default weight 1 milega
         cumulative_weight += RARITY_WEIGHTS.get(char.get('rarity'), (1, False))[0]
         cumulative_weights.append(cumulative_weight)
 
@@ -67,8 +79,7 @@ async def send_image(update: Update, context: CallbackContext) -> None:
     if not selected_character:
         selected_character = random.choice(available_characters)
 
-    # FIX: Pehle 'character' save ho raha tha jo loop ka aakhri item tha. 
-    # Ab 'selected_character' save hoga.
+    # Naya character save ho raha hai
     last_characters[chat_id] = selected_character
     last_characters[chat_id]['timestamp'] = time.time()
     
@@ -76,16 +87,16 @@ async def send_image(update: Update, context: CallbackContext) -> None:
         del first_correct_guesses[chat_id]
 
     rarity_text = selected_character.get('rarity', 'Unknown Rarity')
-    caption_text = f"A {rarity_text} Character Appears!\nUse /guess to claim this mysterious character!\nHurry, before someone else snatches them!"
+    caption_text = f"✨ A {rarity_text} Character Appears! ✨\n🔍 Use /guess to claim this mysterious character!\n💫 Hurry, before someone else snatches them!"
 
-    # Check if the character has a video URL
+    # Spoiler effect ke sath image/video send karo
     if 'vid_url' in selected_character:
         sent_message = await context.bot.send_video(
             chat_id=chat_id,
             video=selected_character['vid_url'],
             caption=caption_text,
             parse_mode='Markdown',
-            has_spoiler=True  # Spoiler effect for video
+            has_spoiler=True
         )
     else:
         sent_message = await context.bot.send_photo(
@@ -93,7 +104,7 @@ async def send_image(update: Update, context: CallbackContext) -> None:
             photo=selected_character.get('img_url', ''),
             caption=caption_text,
             parse_mode='Markdown',
-            has_spoiler=True  # Spoiler effect for image
+            has_spoiler=True
         )
 
     # Schedule message deletion after 5 minutes
