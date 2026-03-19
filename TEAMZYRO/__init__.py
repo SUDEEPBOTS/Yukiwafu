@@ -31,7 +31,9 @@ TOKEN = os.getenv("TOKEN", "8092720888:AAGdYNEUDOmGkPONuvO_YQ_ywdWly5INT2s")
 GLOG = os.getenv("GLOG", "gojo_waifu")
 CHARA_CHANNEL_ID = os.getenv("CHARA_CHANNEL_ID", "gojo_waifu")
 SUPPORT_CHAT_ID = os.getenv("SUPPORT_CHAT_ID", "-1002792716047")
-mongo_url = os.getenv("MONGO_URL", "mongodb+srv://Gojowaifu:waifu123@gojowaifu.royysxq.mongodb.net/?retryWrites=true&w=majority&appName=Gojowaifu")
+
+# Updated MongoDB URL
+mongo_url = os.getenv("MONGO_URL", "mongodb+srv://sudeeptelegram_db_user:tannu966755@sudeepmusic.gcdu9h0.mongodb.net/?retryWrites=true&w=majority")
 
 MUSJ_JOIN = os.getenv("MUSJ_JOIN", "https://t.me/+8KU5ZDxvZyw0N2U1")
 
@@ -57,7 +59,9 @@ ZYRO = Client("Shivu", api_id=api_id, api_hash=api_hash, bot_token=TOKEN)
 
 # -------------------------- DATABASE SETUP ------------------------------
 ddw = AsyncIOMotorClient(mongo_url)
-db = ddw['hinata_waifu']
+
+# Updated Database Name
+db = ddw['Waifuimm']
 
 # Collections
 user_totals_collection = db['gaming_totals']
@@ -65,7 +69,9 @@ group_user_totals_collection = db['gaming_group_total']
 top_global_groups_collection = db['gaming_global_groups']
 pm_users = db['gaming_pm_users']
 destination_collection = db['gamimg_user_collection']
-destination_char = db['gaming_anime_characters']
+
+# Updated Collection Name for Characters
+destination_char = db['characters']
 
 # -------------------------- GLOBAL VARIABLES ----------------------------
 app = ZYRO
