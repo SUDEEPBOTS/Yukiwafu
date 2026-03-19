@@ -2,6 +2,7 @@ import os
 import importlib.util
 import random
 import time
+import asyncio # 🔥 FIX 2: Asyncio import kiya anti-lag ke liye
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from TEAMZYRO import *
@@ -78,23 +79,27 @@ async def start_private_command(client, message):
     caption, buttons = await generate_start_message(client, message)
     media = random.choice(START_MEDIA)
     
-    await app.send_message(
-        chat_id=GLOG,
-        text=f"{message.from_user.mention} ᴊᴜsᴛ sᴛᴀʀᴛᴇᴅ ᴛʜᴇ ʙᴏᴛ ᴛᴏ ᴄʜᴇᴄᴋ <b>sᴜᴅᴏʟɪsᴛ</b>.\n\n<b>ᴜsᴇʀ ɪᴅ :</b> <code>{message.from_user.id}</code>\n<b>ᴜsᴇʀɴᴀᴍᴇ :</b> @{message.from_user.username}",
-    )
+    # 🔥 FIX 1: Try-Except for Log Channel Message
+    try:
+        await app.send_message(
+            chat_id=GLOG,
+            text=f"{message.from_user.mention} ᴊᴜsᴛ sᴛᴀʀᴛᴇᴅ ᴛʜᴇ ʙᴏᴛ ᴛᴏ ᴄʜᴇᴄᴋ <b>sᴜᴅᴏʟɪsᴛ</b>.\n\n<b>ᴜsᴇʀ ɪᴅ :</b> <code>{message.from_user.id}</code>\n<b>ᴜsᴇʀɴᴀᴍᴇ :</b> @{message.from_user.username}",
+        )
+    except Exception as e:
+        print(f"⚠️ Log channel mein message nahi bhej paya (Admin rights nahi honge): {e}")
     
     # Check if media is image or video based on extension
     if media.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
         await message.reply_photo(
             photo=media,
             caption=caption,
-            reply_markup=InlineKeyboardMarkup(buttons)  # Pass InlineKeyboardMarkup directly
+            reply_markup=InlineKeyboardMarkup(buttons)
         )
     else:
         await message.reply_video(
             video=media,
             caption=caption,
-            reply_markup=InlineKeyboardMarkup(buttons)  # Pass InlineKeyboardMarkup directly
+            reply_markup=InlineKeyboardMarkup(buttons)
         )
 
 # 🔹 Group Start Command Handler
@@ -108,13 +113,13 @@ async def start_group_command(client, message):
         await message.reply_photo(
             photo=media,
             caption=caption,
-            reply_markup=InlineKeyboardMarkup(buttons)  # Pass InlineKeyboardMarkup directly
+            reply_markup=InlineKeyboardMarkup(buttons)
         )
     else:
         await message.reply_video(
             video=media,
             caption=caption,
-            reply_markup=InlineKeyboardMarkup(buttons)  # Pass InlineKeyboardMarkup directly
+            reply_markup=InlineKeyboardMarkup(buttons)
         )
 
 # 🔹 Function to Find Help Modules
@@ -130,7 +135,7 @@ def find_help_modules():
 # 🔹 Help Button Click Handler
 @app.on_callback_query(filters.regex("^open_help$"))
 async def show_help_menu(client, query: CallbackQuery):
-    time.sleep(1)
+    await asyncio.sleep(1) # 🔥 FIX 2: time.sleep(1) ko asyncio.sleep(1) kiya
     buttons = find_help_modules()
     buttons.append([InlineKeyboardButton("⬅ Back", callback_data="back_to_home")])
 
@@ -138,13 +143,13 @@ async def show_help_menu(client, query: CallbackQuery):
         """*ᴄʜᴏᴏsᴇ ᴛʜᴇ ᴄᴀᴛᴇɢᴏʀʏ ғᴏʀ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴɴᴀ ɢᴇᴛ ʜᴇʟᴩ.
 
 ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs ᴄᴀɴ ʙᴇ ᴜsᴇᴅ ᴡɪᴛʜ : /""",
-        reply_markup=InlineKeyboardMarkup(buttons)  # Pass InlineKeyboardMarkup directly
+        reply_markup=InlineKeyboardMarkup(buttons)
     )
 
 # 🔹 Individual Module Help Handler
 @app.on_callback_query(filters.regex(r"^help_(.+)"))
 async def show_help(client, query: CallbackQuery):
-    time.sleep(1)
+    await asyncio.sleep(1) # 🔥 FIX 2: time.sleep(1) ko asyncio.sleep(1) kiya
     module_name = query.data.split("_", 1)[1]
     
     try:
@@ -154,7 +159,7 @@ async def show_help(client, query: CallbackQuery):
         
         await query.message.edit_text(
             f"**{module_name} Help:**\n\n{help_text}",
-            reply_markup=InlineKeyboardMarkup(buttons)  # Pass InlineKeyboardMarkup directly
+            reply_markup=InlineKeyboardMarkup(buttons)
         )
     except Exception as e:
         await query.answer("Help load karne me error aayi!")
@@ -162,9 +167,10 @@ async def show_help(client, query: CallbackQuery):
 # 🔹 Back to Home
 @app.on_callback_query(filters.regex("^back_to_home$"))
 async def back_to_home(client, query: CallbackQuery):
-    time.sleep(1)
+    await asyncio.sleep(1) # 🔥 FIX 2: time.sleep(1) ko asyncio.sleep(1) kiya
     caption, buttons = await generate_start_message(client, query.message)
     await query.message.edit_text(
         caption,
-        reply_markup=InlineKeyboardMarkup(buttons)  # Pass InlineKeyboardMarkup directly
-        )
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+    
