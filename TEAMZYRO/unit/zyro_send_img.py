@@ -89,24 +89,43 @@ async def send_image(update: Update, context: CallbackContext) -> None:
     rarity_text = selected_character.get('rarity', 'Unknown Rarity')
     caption_text = f"✨ A {rarity_text} Character Appears! ✨\n🔍 Use /guess to claim this mysterious character!\n💫 Hurry, before someone else snatches them!"
 
-    # Spoiler effect ke sath image/video send karo
-    if 'vid_url' in selected_character:
-        sent_message = await context.bot.send_video(
-            chat_id=chat_id,
-            video=selected_character['vid_url'],
-            caption=caption_text,
-            parse_mode='Markdown',
-            has_spoiler=True
-        )
-    else:
-        sent_message = await context.bot.send_photo(
-            chat_id=chat_id,
-            photo=selected_character.get('img_url', ''),
-            caption=caption_text,
-            parse_mode='Markdown',
-            has_spoiler=True
-        )
+    # 🔥 THE HACKER FIX: Tute hue link se bachne ka tareeqa
+    fallback_img = "https://files.catbox.moe/7ccoub.jpg" # Agar DB wala link fail ho jaye
+    img_to_send = selected_character.get('img_url', fallback_img)
 
-    # Schedule message deletion after 5 minutes
-    asyncio.create_task(delete_message(chat_id, sent_message.message_id, context))
-    
+    try:
+        # Spoiler effect ke sath image/video send karo
+        if 'vid_url' in selected_character:
+            sent_message = await context.bot.send_video(
+                chat_id=chat_id,
+                video=selected_character['vid_url'],
+                caption=caption_text,
+                parse_mode='Markdown',
+                has_spoiler=True
+            )
+        else:
+            sent_message = await context.bot.send_photo(
+                chat_id=chat_id,
+                photo=img_to_send,
+                caption=caption_text,
+                parse_mode='Markdown',
+                has_spoiler=True
+            )
+
+        # Schedule message deletion after 5 minutes
+        asyncio.create_task(delete_message(chat_id, sent_message.message_id, context))
+        
+    except Exception as e:
+        print(f"⚠️ Link toot gaya ya Telegram nakhre kar raha hai (Waifu ID {selected_character.get('id')}): {e}")
+        try:
+            # Plan B: Chupchaap default photo chipka do, game mat rukne do!
+            sent_message = await context.bot.send_photo(
+                chat_id=chat_id,
+                photo=fallback_img,
+                caption=f"⚠️ {rarity_text} Waifu ka photo link toot gaya tha, par guessing jaari hai!\n🔍 /guess karo!",
+                parse_mode='Markdown'
+            )
+            asyncio.create_task(delete_message(chat_id, sent_message.message_id, context))
+        except Exception as deep_e:
+            print(f"❌ Plan B bhi fail ho gaya: {deep_e}")
+            
