@@ -24,7 +24,6 @@ async def check_character(client, message):
     ])
 
     # 🔥 FIX 1: KeyError se bachne ke liye '.get()' use kiya. 
-    # Agar 'anime' nahi mila, toh 'event_tag' uthayega. Agar wo bhi nahi, toh 'N/A' likhega.
     anime_name = character.get('anime', character.get('event_tag', 'N/A'))
     
     # 🔥 FIX 2: Baaki sab mein bhi '.get()' lagaya taaki future mein crash na ho
@@ -36,11 +35,30 @@ async def check_character(client, message):
         f"💎 Rarity: {character.get('rarity', 'Unknown')}\n"
     )
 
-    if 'vid_url' in character:
-        await message.reply_video(character['vid_url'], caption=text, reply_markup=keyboard)
-    else:
-        # Fallback to img_url
-        await message.reply_photo(character.get('img_url', ''), caption=text, reply_markup=keyboard)
+    # 🔥 THE HACKER FIX: Tute hue link se bachne ka tareeqa
+    fallback_img = "https://files.catbox.moe/7ccoub.jpg" 
+
+    try:
+        if 'vid_url' in character:
+            await message.reply_video(character['vid_url'], caption=text, reply_markup=keyboard)
+        else:
+            img_to_send = character.get('img_url', fallback_img)
+            # Agar DB mein link empty string ("") ho toh bhi fallback use karega
+            if not img_to_send:
+                img_to_send = fallback_img
+            await message.reply_photo(img_to_send, caption=text, reply_markup=keyboard)
+            
+    except Exception as e:
+        print(f"⚠️ /check command pe link toot gaya (Waifu ID {character_id}): {e}")
+        try:
+            # Plan B: Chupchaap default photo chipka do aur details dikha do!
+            await message.reply_photo(
+                fallback_img, 
+                caption=f"⚠️ **Asli photo ka link toot gaya hai, par info ye rahi:**\n\n{text}", 
+                reply_markup=keyboard
+            )
+        except Exception as deep_e:
+            await message.reply_text(f"⚠️ Photo load nahi hui, par stats ye rahe:\n\n{text}", reply_markup=keyboard)
 
 
 @app.on_callback_query(filters.regex("^whohaveit_"))
